@@ -1,0 +1,148 @@
+---
+title: "Election Analysis"
+author: "De Verrekijker"
+date: "November 30, 2016"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo=FALSE}
+
+NAME = 1
+ELIGIBLE_VOTERS = 2
+QUOTA = 3 # don't know what this variable is for
+VOTES = 4
+VOTERS = 5
+TURNOUT = 6
+
+compute_max_votes <- function(results){
+  # returns the highest number of vote for any candidate
+  # needed for ylim parameter
+  max_votes = 0
+  for (r in seq(1,length(results))){
+    max_votes = max(max(results[[r]][[4]]),max_votes)
+  }
+  return(max_votes)
+}
+
+plot_results_per_faculty <- function(res,max_votes,cols){
+  labs=c()
+  for (r in seq(1,length(res))){
+    labs[r] = res[[r]][NAME]
+  }
+  plot(res[[1]][[VOTES]],ylim=c(0,max_votes),type='o',col=cols[1],xlab='nth place',ylab='number of votes')
+  for (r in seq(2,length(res))){
+    lines(res[[r]][[VOTES]],type='o',col=cols[r])
+  }
+  legend(5,180, labs, cex=0.8, col=cols, pch=21, lty=1);
+}
+
+plot_turnout_per_faculty <- function(res){
+  
+  
+  #res=res[order(sapply(res,'[[',TURNOUT))]
+  
+  turnouts = c()
+  eligibles = c()
+  labs=c()
+  
+  for (r in seq(1,length(res))){
+    labs[r] = res[[r]][NAME]
+    turnouts[r] = res[[r]][[TURNOUT]]
+    eligibles[r] = res[[r]][[ELIGIBLE_VOTERS]]
+  }
+  
+  normalised_eligibles = c()
+  max_eligible = max(eligibles)
+  eligibles = eligibles/max_eligible
+  plot(eligibles,type='o',ylim=c(0,1),ylab="Turnout (red) and Eligible Voters (black)", xaxt = "n",xlab='Faculty')
+  
+  axis(1, at=1:5, labels=labs)
+  lines(turnouts,col='red',type='o')
+}
+
+
+preprocess <- function(results){
+  for (r in seq(1,length(results))){
+    results[[r]][[VOTES]] = sort(results[[r]][[VOTES]],decreasing = TRUE)
+    results[[r]][[VOTERS]] = sum(results[[r]][[VOTES]])
+    results[[r]][[TURNOUT]] = results[[r]][[VOTERS]]/results[[r]][[ELIGIBLE_VOTERS]]
+  }
+  return(results)
+}
+
+plot_total_turnout <- function(res){
+  voters = 0
+  eligible_voters = 0
+  
+  for (r in seq(1,length(res))){
+    voters = voters + res[[r]][[VOTERS]]
+    eligible_voters = eligible_voters + res[[r]][[ELIGIBLE_VOTERS]]
+  }
+  slices <- c(voters,eligible_voters-voters)
+  lbls <- c("Voters","Non-voters")
+  pct <- round(slices/sum(slices)*100)
+  lbls <- paste(lbls, pct) # add percents to labels 
+  lbls <- paste(lbls,"%",sep="") # ad % to labels 
+  pie(slices,labels = lbls)
+}
+
+plot_voter_distribution <- function(res,cols){
+  slices = c()
+  lbls = c()
+  for (r in seq(1,length(res))){
+    slices[r] = res[[r]][[VOTERS]]
+    lbls[r] = res[[r]][[NAME]]
+  }
+  pct <- round(slices/sum(slices)*100)
+  lbls <- paste(lbls, pct) # add percents to labels 
+  lbls <- paste(lbls,"%",sep="") # ad % to labels 
+  pie(slices,labels = lbls, col=rainbow(length(lbls)))
+}
+
+```
+
+```{r echo=FALSE}
+results = preprocess(list(
+  list('VUmc',2457,99,sort(c(123,47,9,68,21,88,93))),
+  list('Exact Sciences',4325,31,c(37,34,28,21,4,25,16)),
+  list('Social Sciences',2775,55,c(65,57,29,28,40,9,41)),
+  list('Law',3209,50,c(185,11,30,21,43,14,8)),
+  list('Economics',5688,82,c(155,154,102,30,11,14,18))
+))
+```
+
+```{r echo=FALSE}
+max_votes = compute_max_votes(results)
+cols = topo.colors(length(results), alpha = 0.8)
+```
+
+# Number of votes per candidate per faculty
+
+```{r echo=FALSE}
+plot_results_per_faculty(results,max_votes,cols)
+```
+
+# Voter Turnout and Number of Eligible Voters per Faculty
+
+```{r echo=FALSE}
+plot_turnout_per_faculty(results)
+```
+
+Number of eligible voters is normalized, with the faculty with most eligilbe voters having value of 1. 
+
+# Total Turnout
+
+```{r echo=FALSE}
+plot_total_turnout(results)
+```
+
+# Voters per faculty
+
+```{r echo=FALSE}
+plot_voter_distribution(results,cols)
+```
+

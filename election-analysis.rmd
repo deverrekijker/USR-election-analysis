@@ -86,8 +86,9 @@ plot_total_turnout <- function(res){
   lbls <- c("Voters","Non-voters")
   pct <- round(slices/sum(slices)*100)
   lbls <- paste(lbls, pct) # add percents to labels 
-  lbls <- paste(lbls,"%",sep="") # ad % to labels 
-  pie(slices,labels = lbls)
+  lbls <- paste(lbls,"% (",slices,')',sep="") # ad % to labels 
+  
+  barplot(slices,names.arg=lbls)
 }
 
 plot_voter_distribution <- function(res,cols){
@@ -97,17 +98,14 @@ plot_voter_distribution <- function(res,cols){
     slices[r] = res[[r]][[VOTERS]]
     lbls[r] = res[[r]][[NAME]]
   }
-  pct <- round(slices/sum(slices)*100)
-  lbls <- paste(lbls, pct) # add percents to labels 
-  lbls <- paste(lbls,"%",sep="") # ad % to labels 
-  pie(slices,labels = lbls, col=rainbow(length(lbls)))
+  barplot(slices,names.arg=lbls)
 }
 
 ```
 
 ```{r echo=FALSE}
 results = preprocess(list(
-  list('VUmc',2457,99,sort(c(123,47,9,68,21,88,93))),
+  list('Medicine',2457,99,sort(c(123,47,9,68,21,88,93))),
   list('Exact Sciences',4325,31,c(37,34,28,21,4,25,16)),
   list('Social Sciences',2775,55,c(65,57,29,28,40,9,41)),
   list('Law',3209,50,c(185,11,30,21,43,14,8)),
@@ -145,4 +143,3 @@ plot_total_turnout(results)
 ```{r echo=FALSE}
 plot_voter_distribution(results,cols)
 ```
-

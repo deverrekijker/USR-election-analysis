@@ -1,7 +1,7 @@
 ---
-title: "Election Analysis"
+title: "Election Plotting"
 author: "De Verrekijker"
-date: "November 30, 2016"
+date: "December 2016"
 output: pdf_document
 ---
 
@@ -33,35 +33,34 @@ plot_results_per_faculty <- function(res,max_votes,cols){
   for (r in seq(1,length(res))){
     labs[r] = res[[r]][NAME]
   }
-  plot(res[[1]][[VOTES]],ylim=c(0,max_votes),type='o',col=cols[1],xlab='nth place',ylab='number of votes')
+  plot(res[[1]][[VOTES]],ylim=c(0,max_votes),type='o',col=cols[1],xlab='nth place',ylab='number of votes',main="Number of voters per candidate per faculty")
   for (r in seq(2,length(res))){
     lines(res[[r]][[VOTES]],type='o',col=cols[r])
   }
   legend(5,180, labs, cex=0.8, col=cols, pch=21, lty=1);
 }
+```
 
+```{r echo=F}
 plot_turnout_per_faculty <- function(res){
-  
   
   #res=res[order(sapply(res,'[[',TURNOUT))]
   
-  turnouts = c()
+  voters = c()
   eligibles = c()
   labs=c()
+  nonvoters=c()
   
   for (r in seq(1,length(res))){
-    labs[r] = res[[r]][NAME]
-    turnouts[r] = res[[r]][[TURNOUT]]
-    eligibles[r] = res[[r]][[ELIGIBLE_VOTERS]]
+    labs[r] = paste(res[[r]][NAME],paste0('(',round(res[[r]][[TURNOUT]],2)*100,'%)'))
+    voters[r] = res[[r]][[VOTERS]]
+    nonvoters[r] = res[[r]][[ELIGIBLE_VOTERS]]-voters[r]
   }
-  
-  normalised_eligibles = c()
-  max_eligible = max(eligibles)
-  eligibles = eligibles/max_eligible
-  plot(eligibles,type='o',ylim=c(0,1),ylab="Turnout (red) and Eligible Voters (black)", xaxt = "n",xlab='Faculty')
-  
-  axis(1, at=1:5, labels=labs)
-  lines(turnouts,col='red',type='o')
+#  nonvoters[length(res)+1] = sum(nonvoters)
+ # voters[length(res)+1] = sum(voters)
+#  labs[length(res)+1]=paste("Total",paste0('(',round(voters[length(res)+1]/(nonvoters[length(res)+1]+voters[length(res)+1]),2)*100,'%)'))
+  v <- rbind(voters,nonvoters)
+  barplot(v,beside=FALSE,names=labs,legend=TRUE,cex.names=0.45,main="Turnout per faculty")
 }
 
 
@@ -72,33 +71,6 @@ preprocess <- function(results){
     results[[r]][[TURNOUT]] = results[[r]][[VOTERS]]/results[[r]][[ELIGIBLE_VOTERS]]
   }
   return(results)
-}
-
-plot_total_turnout <- function(res){
-  voters = 0
-  eligible_voters = 0
-  
-  for (r in seq(1,length(res))){
-    voters = voters + res[[r]][[VOTERS]]
-    eligible_voters = eligible_voters + res[[r]][[ELIGIBLE_VOTERS]]
-  }
-  slices <- c(voters,eligible_voters-voters)
-  lbls <- c("Voters","Non-voters")
-  pct <- round(slices/sum(slices)*100)
-  lbls <- paste(lbls, pct) # add percents to labels 
-  lbls <- paste(lbls,"% (",slices,')',sep="") # ad % to labels 
-  
-  barplot(slices,names.arg=lbls)
-}
-
-plot_voter_distribution <- function(res,cols){
-  slices = c()
-  lbls = c()
-  for (r in seq(1,length(res))){
-    slices[r] = res[[r]][[VOTERS]]
-    lbls[r] = res[[r]][[NAME]]
-  }
-  barplot(slices,names.arg=lbls)
 }
 
 ```
@@ -118,28 +90,8 @@ max_votes = compute_max_votes(results)
 cols = topo.colors(length(results), alpha = 0.8)
 ```
 
-# Number of votes per candidate per faculty
-
 ```{r echo=FALSE}
+#par(mfrow=c(1,2))
 plot_results_per_faculty(results,max_votes,cols)
-```
-
-# Voter Turnout and Number of Eligible Voters per Faculty
-
-```{r echo=FALSE}
 plot_turnout_per_faculty(results)
-```
-
-Number of eligible voters is normalized, with the faculty with most eligilbe voters having value of 1. 
-
-# Total Turnout
-
-```{r echo=FALSE}
-plot_total_turnout(results)
-```
-
-# Voters per faculty
-
-```{r echo=FALSE}
-plot_voter_distribution(results,cols)
 ```
